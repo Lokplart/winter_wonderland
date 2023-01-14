@@ -1,3 +1,7 @@
+#include"imgui.h"
+#include"imgui_impl_glfw.h"
+#include"imgui_impl_opengl3.h"
+
 #include "Graphics\window.h"
 #include "Camera\camera.h"
 #include "Shaders\shader.h"
@@ -6,7 +10,8 @@
 #include "Model Loading\meshLoaderObj.h"
 #include "map"
 
-void processKeyboardInput ();
+void processKeyboardInput (bool* p_open, int* p_Jdelay);
+void showJournal(bool* p_open);
 float get_closest_vert(Mesh mesh);
 
 std::ostream& operator<< (std::ostream& out, const glm::vec3& vec) {
@@ -20,6 +25,7 @@ float last_frame = 0.0f;
 float inteact_time = 0.0f;
 
 Window window("Game Engine", 800, 800);
+
 Camera camera;
 
 glm::vec3 lightColor = glm::vec3(1.0f);
@@ -84,7 +90,7 @@ int main()
 	Mesh sun = loader.loadObj("Resources/Models/sphere.obj");
 	Mesh ground = loader.loadObj("Resources/Models/ground.obj", textures["snow"]);
 	Mesh water = loader.loadObj("Resources/Models/water.obj", textures["water"]);
-	//Mesh trees = loader.loadObj("Resources/Models/tree.obj", textures["trees"]);
+	//Mesh trees = loader.loadObj("Resources/Models/tree.obj", textures["trees"]); //uncomment for trees
 	Mesh house = loader.loadObj("Resources/Models/house.obj", textures["house"]);
 	Mesh pedestal = loader.loadObj("Resources/Models/pedestal.obj", textures["pedestal"]);
 	
@@ -92,7 +98,7 @@ int main()
 	Mesh rug = loader.loadObj("Resources/Models/rug.obj", textures["rug"]);
 	Mesh books = loader.loadObj("Resources/Models/books.obj", textures["books"]);
 	Mesh bookshelf = loader.loadObj("Resources/Models/bookshelf.obj", textures["bookshelf"]);
-	//Mesh fireplace = loader.loadObj("Resources/Models/fireplace.obj", textures["fireplace"]);
+	//Mesh fireplace = loader.loadObj("Resources/Models/fireplace.obj", textures["fireplace"]); // uncomment for fireplace
 
 	Mesh key = loader.loadObj("Resources/Models/key.obj", textures["key"]);
 	Mesh doll = loader.loadObj("Resources/Models/doll.obj", textures["doll"]);
@@ -102,14 +108,29 @@ int main()
 	int anim_dir = 1;
 	float anim_y = 0.0f;
 
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	ImGui::StyleColorsDark();
+	ImGui_ImplGlfw_InitForOpenGL(window.getWindow(), true);
+	ImGui_ImplOpenGL3_Init("#version 460");
+	glfwMakeContextCurrent(window.getWindow());
+
+	bool isJournal = true;
+	bool* p_open = &isJournal;
+	int J_delay = 0;
+	int* p_Jdelay = &J_delay;
 	//check if we close the window or press the escape button
 	while (!window.isPressed(GLFW_KEY_ESCAPE) && glfwWindowShouldClose(window.getWindow()) == 0) {
 		window.clear();
 		float currentFrame = (float)(glfwGetTime());
 		delta_time = currentFrame - last_frame;
 		last_frame = currentFrame;
+		J_delay++;
 
-		processKeyboardInput();
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
 
 		if (window.isMousePressed(GLFW_MOUSE_BUTTON_LEFT)) {
 			std::cout << "Pressing mouse button" << std::endl;
@@ -149,7 +170,7 @@ int main()
 		if (camera.location == "outside") {
 			ground.draw(shader);
 			water.draw(shader);
-			//trees.draw(shader);
+			//trees.draw(shader);  //uncomment for trees
 			if (camera.questline_progress > 0) {
 				pedestal.draw(shader);
 			}
@@ -160,7 +181,7 @@ int main()
 			rug.draw(shader);
 			books.draw(shader);
 			bookshelf.draw(shader);
-			//fireplace.draw(shader);
+			//fireplace.draw(shader); //uncomment for fireplace
 		}
 
 		if (camera.location == "outside" && camera.questline_progress > 0 && camera.questline_progress < 3) {
@@ -188,15 +209,20 @@ int main()
 			}
 		}
 		
-		
+		processKeyboardInput(p_open,p_Jdelay);
 
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 		//std::cout << camera.get_camera_position();
-
 		window.update();
 	}
+
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
 }
 
-void processKeyboardInput() {
+void processKeyboardInput(bool* p_open,int* p_Jdelay) {
 	float camera_speed = 10 * delta_time;
 	if (camera.location == "inside") {
 		camera_speed = delta_time;
@@ -235,4 +261,35 @@ void processKeyboardInput() {
 		camera.rotate_ox(camera_speed);
 	if (window.isPressed(GLFW_KEY_DOWN))
 		camera.rotate_ox(-camera_speed);
+
+	//tasks
+	if (!*p_open && window.isPressed(GLFW_KEY_J) && *p_Jdelay > 100)
+	{
+		*p_open = true;
+		*p_Jdelay = 0;
+	}
+	if (*p_open && window.isPressed(GLFW_KEY_J) && *p_Jdelay > 100)
+	{
+		*p_open = false;
+		*p_Jdelay = 0;
+	}
+	if (*p_open)
+	{
+		showJournal(p_open);
+	}
+
+	
+}
+
+void showJournal(bool* p_open)
+{
+	if (!ImGui::Begin("Journal", p_open))
+	{
+		ImGui::End();
+	}
+	else
+	{
+		ImGui::Text("Welcome");
+		ImGui::End();
+	}
 }
