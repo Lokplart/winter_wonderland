@@ -26,7 +26,7 @@ Camera::~Camera()
 {
 }
 
-void Camera::setCameraY(float y) {
+void Camera::set_camera_y(float y) {
 	this->camera_position.y = y + this->height_offset;
 }
 
@@ -103,10 +103,22 @@ void Camera::keyboard_interact() {
 			this->camera_position.z = 11.35f;
 			std::cout << "DEBUG: entered house\n";
 		}
-		if (glm::distance(this->camera_position, this->pedestal_mountain) < 5.0f) {
+		if (glm::distance(this->camera_position, this->pedestal_mountain) < 1.5f) {
+			if (this->questline_progress > 0 && this->questline_progress < 3 && !this->got_key) {
+				this->questline_progress += 1;
+				this->got_key = true;
+
+				std::cout << "DEBUG: questline advanced\n";
+			}
 			std::cout << "DEBUG: interaction - mountain pedestal\n";
 		}
-		if (glm::distance(this->camera_position, this->pedestal_lakeside) < 5.0f) {
+		if (glm::distance(this->camera_position, this->pedestal_lakeside) < 1.5f) {
+			if (this->questline_progress > 0 && this->questline_progress < 3 && !this->got_doll) {
+				this->questline_progress += 1;
+				this->got_doll = true;
+
+				std::cout << "DEBUG: questline advanced\n";
+			}
 			std::cout << "DEBUG: interaction - lakeside pedestal\n";
 		}
 	}
@@ -116,6 +128,20 @@ void Camera::keyboard_interact() {
 			this->camera_position.x = -8.77f;
 			this->camera_position.z = 10.91f;
 			std::cout << "DEBUG: exited house\n";
+		}
+		if (glm::distance(this->camera_position, this->bookshelf) < 0.3f) {
+			if (this->questline_progress == 0) {
+				this->questline_progress = 1;
+				std::cout << "DEBUG: questline advanced\n";
+			}
+			std::cout << "DEBUG: interaction - bookshelf\n";
+		}
+		if (glm::distance(this->camera_position, this->fireplace) < 0.3f) {
+			if (this->questline_progress == 3) {
+				this->questline_progress = 4;
+				std::cout << "DEBUG: questline advanced\n";
+			}
+			std::cout << "DEBUG: interaction - fireplace\n";
 		}
 	}
 }

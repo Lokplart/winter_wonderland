@@ -42,7 +42,8 @@ int main()
 
 	//building and compiling shader program
 	Shader shader("Shaders/vertex_shader.glsl", "Shaders/fragment_shader.glsl");
-	Shader sunShader("Shaders/sun_vertex_shader.glsl", "Shaders/sun_fragment_shader.glsl");
+	Shader sun_shader("Shaders/sun_vertex_shader.glsl", "Shaders/sun_fragment_shader.glsl");
+	Shader anim_shader("Shaders/object_vertex_shader.glsl", "Shaders/object_fragment_shader.glsl");
 
 	//Textures
 	GLuint tex_house = loadBMP("Resources/Textures/house.bmp", 'b');
@@ -58,7 +59,8 @@ int main()
 	GLuint tex_fire_base = loadBMP("Resources/Textures/fireplace_base.bmp", 'b');
 	GLuint tex_fire_wood = loadBMP("Resources/Textures/fireplace_wood.bmp", 'b');
 
-
+	GLuint tex_key = loadBMP("Resources/Textures/key.bmp", 'b');
+	GLuint tex_doll = loadBMP("Resources/Textures/doll.bmp", 'b');
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -73,12 +75,16 @@ int main()
 	add_textures("books", tex_books);
 	add_textures("bookshelf", tex_bookshelf);
 	add_textures("fireplace", tex_fire_base);
+	
+	add_textures("key", tex_key);
+	add_textures("doll", tex_doll);
+
 
 	MeshLoaderObj loader;
 	Mesh sun = loader.loadObj("Resources/Models/sphere.obj");
 	Mesh ground = loader.loadObj("Resources/Models/ground.obj", textures["snow"]);
 	Mesh water = loader.loadObj("Resources/Models/water.obj", textures["water"]);
-	Mesh trees = loader.loadObj("Resources/Models/tree.obj", textures["trees"]);
+	//Mesh trees = loader.loadObj("Resources/Models/tree.obj", textures["trees"]);
 	Mesh house = loader.loadObj("Resources/Models/house.obj", textures["house"]);
 	Mesh pedestal = loader.loadObj("Resources/Models/pedestal.obj", textures["pedestal"]);
 	
@@ -86,46 +92,44 @@ int main()
 	Mesh rug = loader.loadObj("Resources/Models/rug.obj", textures["rug"]);
 	Mesh books = loader.loadObj("Resources/Models/books.obj", textures["books"]);
 	Mesh bookshelf = loader.loadObj("Resources/Models/bookshelf.obj", textures["bookshelf"]);
-	Mesh fireplace = loader.loadObj("Resources/Models/fireplace.obj", textures["fireplace"]);
+	//Mesh fireplace = loader.loadObj("Resources/Models/fireplace.obj", textures["fireplace"]);
+
+	Mesh key = loader.loadObj("Resources/Models/key.obj", textures["key"]);
+	Mesh doll = loader.loadObj("Resources/Models/doll.obj", textures["doll"]);
 
 	camera.spawn();
 
+	int anim_dir = 1;
+	float anim_y = 0.0f;
+
 	//check if we close the window or press the escape button
-	while (!window.isPressed(GLFW_KEY_ESCAPE) &&
-		glfwWindowShouldClose(window.getWindow()) == 0)
-	{
+	while (!window.isPressed(GLFW_KEY_ESCAPE) && glfwWindowShouldClose(window.getWindow()) == 0) {
 		window.clear();
 		float currentFrame = (float)(glfwGetTime());
 		delta_time = currentFrame - last_frame;
 		last_frame = currentFrame;
 
-
 		processKeyboardInput();
 
-		//test mouse input
-		if (window.isMousePressed(GLFW_MOUSE_BUTTON_LEFT))
-		{
+		if (window.isMousePressed(GLFW_MOUSE_BUTTON_LEFT)) {
 			std::cout << "Pressing mouse button" << std::endl;
 		}
-		 //// Code for the light ////
 
-		sunShader.use();
+		sun_shader.use();
 
 		glm::mat4 ProjectionMatrix = glm::perspective(90.0f, window.getWidth() * 1.0f / window.getHeight(), 0.1f, 10000.0f);
 		glm::mat4 ViewMatrix = glm::lookAt(camera.get_camera_position(), camera.get_camera_position() + camera.get_camera_view_direction(), camera.get_camera_up());
 
-		GLuint MatrixID = glGetUniformLocation(sunShader.getId(), "MVP");
+		GLuint MatrixID = glGetUniformLocation(sun_shader.getId(), "MVP");
 
-		//Test for one Obj loading = light source
 
 		glm::mat4 ModelMatrix = glm::mat4(1.0);
 		ModelMatrix = glm::translate(ModelMatrix, lightPos);
 		glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
 		glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
 
-		sun.draw(sunShader);
+		sun.draw(sun_shader);
 
-		//// End code for the light ////
 
 		shader.use();
 
@@ -145,17 +149,46 @@ int main()
 		if (camera.location == "outside") {
 			ground.draw(shader);
 			water.draw(shader);
-			trees.draw(shader);
-			pedestal.draw(shader);
-			camera.setCameraY(ground.find_player_pos(camera.get_camera_position()));
+			//trees.draw(shader);
+			if (camera.questline_progress > 0) {
+				pedestal.draw(shader);
+			}
+			camera.set_camera_y(ground.find_player_pos(camera.get_camera_position()));
 		}
 		else if (camera.location == "inside") {
 			bed.draw(shader);
 			rug.draw(shader);
 			books.draw(shader);
 			bookshelf.draw(shader);
-			fireplace.draw(shader);
+			//fireplace.draw(shader);
 		}
+
+		if (camera.location == "outside" && camera.questline_progress > 0 && camera.questline_progress < 3) {
+			anim_shader.use();
+			MatrixID2 = glGetUniformLocation(anim_shader.getId(), "MVP");
+			ModelMatrixID = glGetUniformLocation(anim_shader.getId(), "model");
+			ModelMatrix = glm::mat4(1.0);
+			ModelMatrix = glm::translate(ModelMatrix, glm::vec3(0.0f, 0.0f, 0.0f));
+			if (anim_y > 0.05f)		  { anim_dir = -1; }
+			else if (anim_y < -0.05f) { anim_dir = 1; }
+			anim_y = anim_y + (delta_time / 10.0f * anim_dir);
+			ModelMatrix = glm::translate(ModelMatrix, glm::vec3(0.0f, anim_y, 0.0f));
+			MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+			glUniformMatrix4fv(MatrixID2, 1, GL_FALSE, &MVP[0][0]);
+			glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+			glUniform3f(glGetUniformLocation(anim_shader.getId(), "lightColor"), lightColor.x, lightColor.y, lightColor.z);
+			glUniform3f(glGetUniformLocation(anim_shader.getId(), "lightPos"), lightPos.x, lightPos.y, lightPos.z);
+			glUniform3f(glGetUniformLocation(anim_shader.getId(), "viewPos"), camera.get_camera_position().x, camera.get_camera_position().y, camera.get_camera_position().z);
+
+			if (!camera.got_key) {
+				key.draw(anim_shader);
+			}
+			if (!camera.got_doll) {
+				doll.draw(anim_shader);
+			}
+		}
+		
+		
 
 		//std::cout << camera.get_camera_position();
 
@@ -164,7 +197,7 @@ int main()
 }
 
 void processKeyboardInput() {
-	float camera_speed = 2 * delta_time;
+	float camera_speed = 10 * delta_time;
 	if (camera.location == "inside") {
 		camera_speed = delta_time;
 	}

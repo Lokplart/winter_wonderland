@@ -25,7 +25,8 @@ class Camera {
 		std::vector<float> house_bound_exit = { -9.14f, 11.11f, -8.92f, 11.41f };
 		glm::vec3 pedestal_mountain = glm::vec3(-31.88f, 24.70f, 5.23f);
 		glm::vec3 pedestal_lakeside = glm::vec3(42.09f, 1.58f, 1.44f);
-
+		glm::vec3 bookshelf = glm::vec3(-9.74589f, 1.05275f, 12.7125f);
+		glm::vec3 fireplace = glm::vec3(-9.11807f, 1.05275f, 11.6974f);
 
 		float height_offset = 0.35f;
 
@@ -35,6 +36,10 @@ class Camera {
 
 	public:
 		std::string location = "inside";
+		
+		int questline_progress = 0;
+		bool got_key = false;
+		bool got_doll = false;
 
 		Camera();
 		Camera(glm::vec3 camera_position);
@@ -45,7 +50,7 @@ class Camera {
 		glm::vec3 get_camera_view_direction();
 		glm::vec3 get_camera_up();
 
-		void setCameraY(float y);
+		void set_camera_y(float y);
 
 		void keyboard_move_front(float camera_speed);
 		void keyboard_move_back(float camera_speed);
