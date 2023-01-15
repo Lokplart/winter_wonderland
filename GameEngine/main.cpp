@@ -10,8 +10,9 @@
 #include "Model Loading\meshLoaderObj.h"
 #include "map"
 
-void processKeyboardInput (bool* p_open, int* p_Jdelay);
+void processKeyboardInput (bool* p_open, int* p_Jdelay, bool* p_openi, int* p_Idelay);
 void showJournal(bool* p_open);
+void showInventory(bool* p_openi);
 float get_closest_vert(Mesh mesh);
 
 std::ostream& operator<< (std::ostream& out, const glm::vec3& vec) {
@@ -120,6 +121,10 @@ int main()
 	bool* p_open = &isJournal;
 	int J_delay = 0;
 	int* p_Jdelay = &J_delay;
+	bool isInventory = false;
+	bool* p_openi = &isInventory;
+	int I_delay = 0;
+	int* p_Idelay = &I_delay;
 	//check if we close the window or press the escape button
 	while (!window.isPressed(GLFW_KEY_ESCAPE) && glfwWindowShouldClose(window.getWindow()) == 0) {
 		window.clear();
@@ -127,6 +132,7 @@ int main()
 		delta_time = currentFrame - last_frame;
 		last_frame = currentFrame;
 		J_delay++;
+		I_delay++;
 
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
@@ -209,7 +215,7 @@ int main()
 			}
 		}
 		
-		processKeyboardInput(p_open,p_Jdelay);
+		processKeyboardInput(p_open,p_Jdelay,p_openi,p_Idelay);
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -222,7 +228,7 @@ int main()
 	ImGui::DestroyContext();
 }
 
-void processKeyboardInput(bool* p_open,int* p_Jdelay) {
+void processKeyboardInput(bool* p_open,int* p_Jdelay, bool* p_openi, int* p_Idelay) {
 	float camera_speed = 10 * delta_time;
 	if (camera.location == "inside") {
 		camera_speed = delta_time;
@@ -277,6 +283,20 @@ void processKeyboardInput(bool* p_open,int* p_Jdelay) {
 	{
 		showJournal(p_open);
 	}
+	if (!*p_openi && window.isPressed(GLFW_KEY_I) && *p_Idelay > 100)
+	{
+		*p_openi = true;
+		*p_Idelay = 0;
+	}
+	if (*p_openi && window.isPressed(GLFW_KEY_I) && *p_Idelay > 100)
+	{
+		*p_openi = false;
+		*p_Idelay = 0;
+	}
+	if (*p_openi)
+	{
+		showInventory(p_openi);
+	}
 
 	
 }
@@ -289,7 +309,57 @@ void showJournal(bool* p_open)
 	}
 	else
 	{
-		ImGui::Text("Welcome");
+		if (camera.questline_progress == 0)
+			ImGui::Text("Search the bookshelf.");
+		if (camera.questline_progress == 1)
+			ImGui::Text("You have to find two secret items.");
+		if (camera.questline_progress == 2)
+			ImGui::Text("You have to find one secret item.");
+		if (camera.questline_progress == 3)
+			ImGui::Text("Throw them in the fire!");
+		if (camera.questline_progress == 4)
+			ImGui::Text("Drink the potion in you inventory at the edge of the world.");
+		
 		ImGui::End();
 	}
 }
+
+void showInventory(bool* p_openi)
+{
+	if (!ImGui::Begin("Inventory", p_openi))
+	{
+		ImGui::End();
+	}
+	else
+	{
+		if (camera.questline_progress == 4/* && the condition that it is at the edge of the world(TODO)*/)
+		{
+			if (ImGui::Selectable("Potion",false))
+				camera.questline_progress = 5;
+		}
+		else
+			ImGui::Text("Empty");
+
+		ImGui::End();
+	}
+}
+
+//void showMenu(bool* p_openm)
+//{
+//	if (!ImGui::Begin("Menu", p_openi))
+//	{
+//		ImGui::End();
+//	}
+//	else
+//	{
+//		if (camera.questline_progress == 4)
+//		{
+//			if (ImGui::Selectable("Key", false))
+//				camera.questline_progress = 5;
+//		}
+//		else
+//			ImGui::Text("Empty");
+//
+//		ImGui::End();
+//	}
+//}
