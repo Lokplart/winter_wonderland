@@ -10,9 +10,10 @@
 #include "Model Loading\meshLoaderObj.h"
 #include "map"
 
-void processKeyboardInput (bool* p_open, int* p_Jdelay, bool* p_openi, int* p_Idelay);
+void processKeyboardInput (bool* p_open, int* p_Jdelay, bool* p_openi, int* p_Idelay, bool* p_items, bool* p_openm, int* M_delay, bool* p_close);
 void showJournal(bool* p_open);
-void showInventory(bool* p_openi);
+void showInventory(bool* p_openi, bool* p_items);
+void showMenu(bool* p_openm, bool* p_open, bool* p_openi, int* p_Idelay, bool* p_items, int* p_Jdelay,bool* p_close);
 float get_closest_vert(Mesh mesh);
 
 std::ostream& operator<< (std::ostream& out, const glm::vec3& vec) {
@@ -125,14 +126,23 @@ int main()
 	bool* p_openi = &isInventory;
 	int I_delay = 0;
 	int* p_Idelay = &I_delay;
+	bool isMenu = false;
+	bool* p_openm = &isMenu;
+	int M_delay = 0;
+	int* p_Mdelay = &M_delay;
+	bool close = false;
+	bool* p_close = &close;
+	bool items = false;
+	bool* p_items = &items;
 	//check if we close the window or press the escape button
-	while (!window.isPressed(GLFW_KEY_ESCAPE) && glfwWindowShouldClose(window.getWindow()) == 0) {
+	while (!*p_close && glfwWindowShouldClose(window.getWindow()) == 0) {
 		window.clear();
 		float currentFrame = (float)(glfwGetTime());
 		delta_time = currentFrame - last_frame;
 		last_frame = currentFrame;
 		J_delay++;
 		I_delay++;
+		M_delay++;
 
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
@@ -215,7 +225,7 @@ int main()
 			}
 		}
 		
-		processKeyboardInput(p_open,p_Jdelay,p_openi,p_Idelay);
+		processKeyboardInput(p_open,p_Jdelay,p_openi,p_Idelay, p_items,p_openm,p_Mdelay,p_close);
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -228,7 +238,7 @@ int main()
 	ImGui::DestroyContext();
 }
 
-void processKeyboardInput(bool* p_open,int* p_Jdelay, bool* p_openi, int* p_Idelay) {
+void processKeyboardInput(bool* p_open,int* p_Jdelay, bool* p_openi, int* p_Idelay,bool* p_items, bool* p_openm, int* p_Mdelay, bool* p_close) {
 	float camera_speed = 10 * delta_time;
 	if (camera.location == "inside") {
 		camera_speed = delta_time;
@@ -283,6 +293,7 @@ void processKeyboardInput(bool* p_open,int* p_Jdelay, bool* p_openi, int* p_Idel
 	{
 		showJournal(p_open);
 	}
+
 	if (!*p_openi && window.isPressed(GLFW_KEY_I) && *p_Idelay > 100)
 	{
 		*p_openi = true;
@@ -295,7 +306,22 @@ void processKeyboardInput(bool* p_open,int* p_Jdelay, bool* p_openi, int* p_Idel
 	}
 	if (*p_openi)
 	{
-		showInventory(p_openi);
+		showInventory(p_openi,p_items);
+	}
+
+	if (!*p_openm && window.isPressed(GLFW_KEY_ESCAPE) && *p_Mdelay > 100)
+	{
+		*p_openm = true;
+		*p_Mdelay = 0;
+	}
+	if (*p_openm && window.isPressed(GLFW_KEY_ESCAPE) && *p_Mdelay > 100)
+	{
+		*p_openm = false;
+		*p_Mdelay = 0;
+	}
+	if (*p_openm)
+	{
+		showMenu(p_openm, p_open, p_openi, p_Idelay,p_items, p_Jdelay, p_close);
 	}
 
 	
@@ -324,7 +350,7 @@ void showJournal(bool* p_open)
 	}
 }
 
-void showInventory(bool* p_openi)
+void showInventory(bool* p_openi, bool* p_items)
 {
 	if (!ImGui::Begin("Inventory", p_openi))
 	{
@@ -332,34 +358,67 @@ void showInventory(bool* p_openi)
 	}
 	else
 	{
+		if (!*p_items || camera.questline_progress == 5)
+		{
+			ImGui::Text("Empty");
+		}
 		if (camera.questline_progress == 4/* && the condition that it is at the edge of the world(TODO)*/)
 		{
-			if (ImGui::Selectable("Potion",false))
+			if (ImGui::Selectable("Potion", false))
 				camera.questline_progress = 5;
 		}
-		else
-			ImGui::Text("Empty");
+		else if (camera.got_doll && !camera.got_key && camera.questline_progress !=5)
+		{
+			ImGui::Selectable("Doll", false);
+			*p_items = true;
+		}
+		else if (camera.got_key && !camera.got_doll && camera.questline_progress != 5)
+		{
+			ImGui::Selectable("Key", false);
+			*p_items = true;
+		}
+		else if (camera.got_key && camera.got_doll && camera.questline_progress != 5/* && checker for around fireplace*/)  //(TODO) when interacting with fireplace you need to select both of them from the inventory to get potion;
+		{
+			ImGui::Selectable("Key", false);
+			ImGui::Selectable("Doll", false);
+			*p_items = true;
+			/*if (ImGui::Selectable("Key", false) && ImGui::Selectable("Doll", false))
+			{
 
+			}*/
+		}
+			
 		ImGui::End();
 	}
 }
 
-//void showMenu(bool* p_openm)
-//{
-//	if (!ImGui::Begin("Menu", p_openi))
-//	{
-//		ImGui::End();
-//	}
-//	else
-//	{
-//		if (camera.questline_progress == 4)
-//		{
-//			if (ImGui::Selectable("Key", false))
-//				camera.questline_progress = 5;
-//		}
-//		else
-//			ImGui::Text("Empty");
-//
-//		ImGui::End();
-//	}
-//}
+void showMenu(bool* p_openm, bool* p_open, bool* p_openi, int* p_Idelay,bool* p_items, int* p_Jdelay,bool* p_close)
+{
+	if (!ImGui::Begin("Menu", p_openm))
+	{
+		ImGui::End();
+	}
+	else
+	{
+		if (ImGui::Selectable("Inventory", false) && !*p_openi && *p_Idelay > 100)
+		{
+			*p_Idelay = 0;
+			*p_openi = true;
+			showInventory(p_openi,p_items);
+		}
+
+		if (ImGui::Selectable("Journal", false) && !*p_open && *p_Jdelay > 100)
+		{
+			*p_Jdelay = 0;
+			*p_open = true;
+			showJournal(p_open);
+		}
+
+		if (ImGui::Selectable("Quit", false))
+		{
+			*p_close = true;
+		}
+		
+		ImGui::End();
+	}
+}
