@@ -336,15 +336,21 @@ void showJournal(bool* p_open)
 	else
 	{
 		if (camera.questline_progress == 0)
-			ImGui::Text("Search the bookshelf.");
+			ImGui::Text("Screw this place. Lets try that old book again...\nMaybe it's more then just fairytales...");
 		if (camera.questline_progress == 1)
-			ImGui::Text("You have to find two secret items.");
-		if (camera.questline_progress == 2)
-			ImGui::Text("You have to find one secret item.");
+			ImGui::Text("The book mentioned a 'key' and a 'doll' that keep people bound to this world.\nI need to find them!");
+		if (camera.questline_progress == 2) {
+			if (camera.got_key) {
+				ImGui::Text("I got the key, now to find the doll");
+			}
+			else if (camera.got_doll) {
+				ImGui::Text("I got the doll, now to find the key");
+			}
+		}
 		if (camera.questline_progress == 3)
-			ImGui::Text("Throw them in the fire!");
+			ImGui::Text("I found them! Now I need their... 'contents'?\nLets try burning them, what's the worst that could happen?");
 		if (camera.questline_progress == 4)
-			ImGui::Text("Drink the potion in you inventory at the edge of the world.");
+			ImGui::Text("This is it! The book said to consume their 'contents' at 'the Edge of the World'...\nWhat could that mean?");
 		
 		ImGui::End();
 	}
@@ -358,14 +364,11 @@ void showInventory(bool* p_openi, bool* p_items)
 	}
 	else
 	{
-		if (!*p_items || camera.questline_progress == 5)
+		if (camera.questline_progress == 4)
 		{
-			ImGui::Text("Empty");
-		}
-		if (camera.questline_progress == 4/* && the condition that it is at the edge of the world(TODO)*/)
-		{
-			if (ImGui::Selectable("Potion", false))
-				camera.questline_progress = 5;
+			if (ImGui::Selectable("Potion", false)) {
+				camera.at_edge_of_world();
+			}
 		}
 		else if (camera.got_doll && !camera.got_key && camera.questline_progress !=5)
 		{
@@ -377,15 +380,11 @@ void showInventory(bool* p_openi, bool* p_items)
 			ImGui::Selectable("Key", false);
 			*p_items = true;
 		}
-		else if (camera.got_key && camera.got_doll && camera.questline_progress != 5/* && checker for around fireplace*/)  //(TODO) when interacting with fireplace you need to select both of them from the inventory to get potion;
+		else if (camera.got_key && camera.got_doll && camera.questline_progress != 5) 
 		{
 			ImGui::Selectable("Key", false);
 			ImGui::Selectable("Doll", false);
 			*p_items = true;
-			/*if (ImGui::Selectable("Key", false) && ImGui::Selectable("Doll", false))
-			{
-
-			}*/
 		}
 			
 		ImGui::End();

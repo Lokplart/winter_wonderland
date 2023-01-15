@@ -167,10 +167,22 @@ glm::vec3 Camera::check_pos(glm::vec3 new_camera_pos) {
 }
 
 void Camera::spawn() {
+	this->location = "inside";
+
 	this->camera_position.x = -9.9736f;
 	this->camera_position.y = 1.05275f;
 	this->camera_position.z = 12.6552f;
 	this->rotate_oy(-35.0f);
+
+	this->got_key = false;
+	this->got_doll = false;
+	this->questline_progress = 0;
+}
+
+void Camera::at_edge_of_world() {
+	if (std::abs(this->camera_position.x) > 42.0f || std::abs(this->camera_position.z) > 42.0f) {
+		this->spawn();
+	}
 }
 
 glm::mat4 Camera::get_view_matrix() {

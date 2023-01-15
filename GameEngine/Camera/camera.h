@@ -66,6 +66,8 @@ class Camera {
 
 		void spawn();
 
+		void at_edge_of_world();
+
 		bool point_in_polygon(float x, float z, std::vector<float> bound_x, std::vector<float> bound_z);
 		bool point_in_square(std::vector<float> coords);
 
