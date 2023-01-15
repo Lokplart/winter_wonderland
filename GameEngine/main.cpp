@@ -92,7 +92,7 @@ int main()
 	Mesh sun = loader.loadObj("Resources/Models/sphere.obj");
 	Mesh ground = loader.loadObj("Resources/Models/ground.obj", textures["snow"]);
 	Mesh water = loader.loadObj("Resources/Models/water.obj", textures["water"]);
-	//Mesh trees = loader.loadObj("Resources/Models/tree.obj", textures["trees"]); //uncomment for trees
+	Mesh trees = loader.loadObj("Resources/Models/tree.obj", textures["trees"]);
 	Mesh house = loader.loadObj("Resources/Models/house.obj", textures["house"]);
 	Mesh pedestal = loader.loadObj("Resources/Models/pedestal.obj", textures["pedestal"]);
 	
@@ -100,7 +100,7 @@ int main()
 	Mesh rug = loader.loadObj("Resources/Models/rug.obj", textures["rug"]);
 	Mesh books = loader.loadObj("Resources/Models/books.obj", textures["books"]);
 	Mesh bookshelf = loader.loadObj("Resources/Models/bookshelf.obj", textures["bookshelf"]);
-	//Mesh fireplace = loader.loadObj("Resources/Models/fireplace.obj", textures["fireplace"]); // uncomment for fireplace
+	Mesh fireplace = loader.loadObj("Resources/Models/fireplace.obj", textures["fireplace"]);
 
 	Mesh key = loader.loadObj("Resources/Models/key.obj", textures["key"]);
 	Mesh doll = loader.loadObj("Resources/Models/doll.obj", textures["doll"]);
@@ -186,7 +186,7 @@ int main()
 		if (camera.location == "outside") {
 			ground.draw(shader);
 			water.draw(shader);
-			//trees.draw(shader);  //uncomment for trees
+			trees.draw(shader);  
 			if (camera.questline_progress > 0) {
 				pedestal.draw(shader);
 			}
@@ -197,7 +197,7 @@ int main()
 			rug.draw(shader);
 			books.draw(shader);
 			bookshelf.draw(shader);
-			//fireplace.draw(shader); //uncomment for fireplace
+			fireplace.draw(shader);
 		}
 
 		if (camera.location == "outside" && camera.questline_progress > 0 && camera.questline_progress < 3) {
@@ -229,7 +229,6 @@ int main()
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-		//std::cout << camera.get_camera_position();
 		window.update();
 	}
 
